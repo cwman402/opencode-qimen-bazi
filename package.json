@@ -1,0 +1,38 @@
+{
+  "name": "opencode-qimen-bazi",
+  "version": "1.0.0",
+  "description": "奇門遁甲 + 八字 for OpenCode — cross-validated Qi Men Dun Jia (拆補法·轉盤) and BaZi charts, rendered as terminal boards and print-ready A4 HTML/PDF/PNG with the reading embedded.",
+  "type": "module",
+  "license": "MIT",
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "qimen",
+    "奇門遁甲",
+    "bazi",
+    "八字",
+    "chinese-astrology",
+    "divination"
+  ],
+  "exports": {
+    ".": "./plugin/index.ts"
+  },
+  "files": [
+    "plugin",
+    "skill",
+    "agent",
+    "commands",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "test": "bun test/validate.ts",
+    "test:crossval": "bun test/crossvalidate.ts",
+    "cli": "bun plugin/cli.ts"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "engines": {
+    "bun": ">=1.1"
+  }
+}
