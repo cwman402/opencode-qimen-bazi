@@ -28,7 +28,9 @@
   "scripts": {
     "test": "bun test/validate.ts",
     "test:crossval": "bun test/crossvalidate.ts",
-    "cli": "bun plugin/cli.ts"
+    "cli": "bun plugin/cli.ts",
+    "sync:skill": "bash scripts/sync-skill.sh",
+    "check:skill": "bash scripts/sync-skill.sh --check"
   },
   "dependencies": {},
   "devDependencies": {},

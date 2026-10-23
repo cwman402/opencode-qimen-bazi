@@ -8,6 +8,8 @@ description: 起奇門遁甲時盤（問事、當下局），出含批註的 PDF
 
 1. 呼叫 `qimen_bazi_report`，`export: false`，取得盤面。沒給時間就用現在（不填 `datetime`）。
    有地點就補 `tz`；要真太陽時就加 `longitude` + `trueSolar: true`。
+   （沒安裝 plugin、沒有這支工具時，改用 `qimen-bazi` skill 的 `scripts/qimen`，
+   參數同名：`--date` / `--tz` / `--true-solar --longitude`。）
 2. 依 `qimen-bazi` skill 的用神表與讀盤次序，用**繁體中文**寫「師傅批註」markdown：
    - 一句話結論
    - 用神取宮表（| 用神 | 落宮 | 讀法 |）
@@ -19,6 +21,7 @@ description: 起奇門遁甲時盤（問事、當下局），出含批註的 PDF
    - `notes`: 上一步的完整 markdown
    - `export: true`
    這一步產出**含批註**的 HTML / PDF / PNG。
+   沒有 plugin 時對應 CLI：`scripts/qimen … --notes-file notes.md --export`。
 4. 回覆：結論 + 關鍵宮位表 + 圖檔路徑。
 
 只想知道卦、不要文件時，可直接用 `qimen_chart`（可帶 `question`）。

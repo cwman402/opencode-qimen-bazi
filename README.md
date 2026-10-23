@@ -25,7 +25,7 @@ pulls from npm at startup.
 | Command | `/qimen` | one question, cast at a moment |
 | Command | `/bazi` | natal structure, 大運 / 流年 |
 | Agent | `qimen-master` | a session-long 術數 persona that always computes before it speaks |
-| Skill | `qimen-bazi` | the reading protocol: 用神 table, palace order, 應期 rules |
+| Skill | `qimen-bazi` | the reading protocol **+ the whole engine**: `scripts/qimen` computes every board with no plugin loaded |
 
 ---
 
@@ -35,22 +35,67 @@ pulls from npm at startup.
 
 ```bash
 # 1. copy this folder to the machine, then:
-bash install.sh
+bash install.sh              # plugin + skill + agent + commands (default)
 
 # 2. restart OpenCode
 opencode service restart
 ```
 
+Pick a subset if you don't want all four:
+
+```bash
+bash install.sh --plugin-only   # only plugins/qimen-bazi — the three tools
+bash install.sh --skill-only    # only skills/qimen-bazi — protocol + engine, no plugin
+```
+
+| Flag | Installs | Slash commands | Needs |
+|---|---|---|---|
+| (default) | plugin, skill, agent, commands | ✓ | — |
+| `--plugin-only` | `plugins/qimen-bazi` | ✗ | — |
+| `--skill-only` | `skills/qimen-bazi` | ✗ | bun, or node ≥ 22.6 |
+
+`OPENCODE_CONFIG=/path bash install.sh …` targets a different config directory; `--help` prints
+usage. The flags are mutually exclusive.
+
 `install.sh` copies four things into `~/.config/opencode/` (override with `OPENCODE_CONFIG=/path`):
 
 ```
-plugins/qimen-bazi/       the plugin (auto-loaded)
-skills/qimen-bazi/        the reading protocol
+plugins/qimen-bazi/       the plugin (auto-loaded, optional)
+skills/qimen-bazi/        the reading protocol + self-contained engine
 agents/qimen-master.md    the master persona
 commands/{paipan,qimen,bazi}.md
 ```
 
+The skill bundles its own copy of the engine (`lib/`, `vendor/`, `scripts/`), so it works even if
+the plugin is not installed or fails to load. `install.sh` refreshes that copy from `plugin/`
+first — `plugin/` stays the single source of truth (`npm run check:skill` verifies it).
+
 Anything already there is moved to `~/.config/opencode/.backups/` first — nothing is silently overwritten, and no stray copy is left where OpenCode would load it.
+
+### Skills-only (no plugin)
+
+The skill does not need the plugin. Use the installer:
+
+```bash
+bash install.sh --skill-only
+```
+
+or copy the folder yourself:
+
+```bash
+cp -R skill/qimen-bazi ~/.config/opencode/skills/
+```
+
+or point a config at the checkout and let OpenCode discover it:
+
+```jsonc
+// ~/.config/opencode/opencode.json
+{ "skills": ["/path/to/opencode-qimen-bazi/skill"] }
+```
+
+In that mode the agent runs `scripts/qimen` through the shell instead of calling
+`bazi_chart` / `qimen_chart` / `qimen_bazi_report`. Same engine, same boards, markdown output
+instead of tool metadata. Requirements: `bun`, or `node` ≥ 22.6 (type stripping).
 
 ### If you publish it to npm
 
@@ -138,7 +183,14 @@ p4  大運 · 流年
 
 ### Command line
 
+Two entry points, one engine:
+
 ```bash
+# from the skill (works on its own, no plugin)
+./skill/qimen-bazi/scripts/qimen --name example --date "1992-11-08 16:45" --tz Asia/Hong_Kong \
+                                 --gender male --notes-file reading.md --export
+
+# from the plugin checkout
 bun plugin/cli.ts --name example --date "1992-11-08 16:45" --tz Asia/Hong_Kong \
                   --gender male --notes-file reading.md --export
 ```
@@ -194,8 +246,10 @@ plugin/lib/export.ts     HTML → PDF (WeasyPrint) → PNG (PyMuPDF)
 plugin/lib/chart.ts      builds both layers from one moment
 plugin/lib/report.ts     markdown assembly
 plugin/vendor/lunar.cjs  lunar-javascript 1.7.7 (MIT)
-skill/ agent/ commands/  OpenCode integration files
+skill/qimen-bazi/        SKILL.md + bundled engine (generated, see scripts/sync-skill.sh)
+agent/ commands/         OpenCode persona + slash commands
 test/                    regression + cross-validation
+scripts/sync-skill.sh    regenerate the skill's engine copy from plugin/
 ```
 
 ## Uninstall

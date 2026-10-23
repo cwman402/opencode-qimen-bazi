@@ -9,6 +9,7 @@ description: 排八字四柱、大運流年，出含批註的 PDF
 1. 呼叫 `bazi_chart` 取得四柱（性別需要，大運順逆靠它）。
    出生地點請補 `tz`；要真太陽時加 `longitude` + `trueSolar: true`。
    時間在 23:00–23:59 要說明用了哪一個子時規則。
+   沒有 plugin 時改用 `qimen-bazi` skill 的 `scripts/qimen --bazi …`。
 2. 依 `qimen-bazi` skill 的次序寫「師傅批註」markdown（繁體中文）：
    - 一句話結論（格局 + 用忌）
    - 命局結構：日主強弱、月令、十神分布、沖刑合、用神
@@ -18,6 +19,7 @@ description: 排八字四柱、大運流年，出含批註的 PDF
    - 收尾免責聲明
 3. 再呼叫 `qimen_bazi_report`，同一組參數，加上 `notes`（上一步的 markdown）與 `export: true`，
    產出**含批註**的 HTML / PDF / PNG（文件同時附奇門盤，方便對照）。
+   沒有 plugin 時：`scripts/qimen … --notes-file notes.md --export`。
 4. 回覆：結論 + 流年表 + 圖檔路徑。
 
 合婚（兩張盤）時：兩張各自 `bazi_chart`，逐項比對 日支 → 日主生剋 → 配偶星 → 大運共時，

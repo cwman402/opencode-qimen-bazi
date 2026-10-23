@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+# qimen — run the bundled chart engine with whatever runtime is available.
+#
+#   ./qimen --bazi --date "1992-11-08 16:45" --tz Asia/Hong_Kong --gender male
+#
+# Prefers bun; falls back to node >= 22.6 with type stripping.
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+if command -v bun >/dev/null 2>&1; then
+  exec bun "$HERE/chart.ts" "$@"
+fi
+if command -v node >/dev/null 2>&1; then
+  exec node --experimental-strip-types "$HERE/chart.ts" "$@"
+fi
+echo "qimen: neither bun nor node is on PATH" >&2
+exit 127
