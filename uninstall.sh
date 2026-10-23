@@ -1,23 +1,28 @@
 #!/usr/bin/env bash
-# Remove the 奇門遁甲 · 八字 plugin, skills, agent and commands from OpenCode.
-# Usage: bash uninstall.sh [--plugin-only] [--yes]
+# Remove the 奇門遁甲 · 八字 plugin, skills, agent and commands.
+# Usage: bash uninstall.sh [--plugin-only | --claude] [--yes]
 set -euo pipefail
 
 DEST="${OPENCODE_CONFIG:-$HOME/.config/opencode}"
+CLAUDE_DEST="${CLAUDE_CONFIG:-$HOME/.claude}"
 STAMP="$(date +%Y%m%d%H%M%S)"
 
 MODE=all
 for arg in "$@"; do
   case "$arg" in
     --plugin-only) MODE=plugin ;;
+    --claude)      MODE=claude ;;
     --yes|-y)      YES=1 ;;
-    -h|--help)     echo "usage: bash uninstall.sh [--plugin-only] [--yes]"; exit 0 ;;
+    -h|--help)     echo "usage: bash uninstall.sh [--plugin-only | --claude] [--yes]"; exit 0 ;;
     *) echo "uninstall.sh: unknown option: $arg" >&2; exit 2 ;;
   esac
 done
 
+[ "$MODE" = claude ] && DEST="$CLAUDE_DEST"
+
 case "$MODE" in
   plugin) WHAT="the qimen-bazi plugin (tools only — skills and commands stay)" ;;
+  claude) WHAT="qimen-bazi (Claude Code: skills + commands + agent)" ;;
   *)      WHAT="qimen-bazi (plugin + skills + agent + commands)" ;;
 esac
 
@@ -40,9 +45,9 @@ mv_if() {
   fi
 }
 
-mv_if "$DEST/plugins/qimen-bazi"
+[ "$MODE" = claude ] || mv_if "$DEST/plugins/qimen-bazi"
 
-if [ "$MODE" = all ]; then
+if [ "$MODE" = all ] || [ "$MODE" = claude ]; then
   mv_if "$DEST/skills/qimen-bazi"
   mv_if "$DEST/skills/bazi"
   mv_if "$DEST/skills/qimen"
@@ -55,6 +60,8 @@ echo ""
 if [ "$MODE" = plugin ]; then
   echo "Done — plugin removed. The skills still work on their own (scripts/qimen), no restart needed."
   echo "Note: a running session keeps the tools until it is restarted."
+elif [ "$MODE" = claude ]; then
+  echo "Done. Restart the Claude Code session to unload the skills."
 else
   echo "Done. Restart OpenCode:  opencode service restart"
 fi

@@ -41,7 +41,8 @@ chart unasked.
 
 ## Install
 
-**Requirements:** OpenCode ≥ 2.0. Nothing else is required for the terminal charts.
+**Requirements:** OpenCode ≥ 2.0 (or Claude Code — see below). Nothing else is required for the
+terminal charts; PDF/PNG and the shell path need `bun` or node ≥ 22.6.
 
 ```bash
 # 1. copy this folder to the machine, then:
@@ -56,16 +57,18 @@ Pick a subset if you don't want all four:
 ```bash
 bash install.sh --plugin-only   # only plugins/qimen-bazi — the three tools
 bash install.sh --skill-only    # only skills/ — protocol + engine + the three entry points, no plugin
+bash install.sh --claude        # Claude Code: ~/.claude/skills + commands + agent
 ```
 
-| Flag | Installs | Slash commands | Needs |
-|---|---|---|---|
-| (default) | plugin, skills, agent, commands | ✓ | — |
-| `--plugin-only` | `plugins/qimen-bazi` | ✗ | — |
-| `--skill-only` | `skills/{qimen-bazi,bazi,qimen,paipan}` | ✗ | bun, or node ≥ 22.6 |
+| Flag | Target | Installs | Slash commands | Needs |
+|---|---|---|---|---|
+| (default) | `~/.config/opencode` | plugin, skills, agent, commands | ✓ | — |
+| `--plugin-only` | `~/.config/opencode` | `plugins/qimen-bazi` | ✗ | — |
+| `--skill-only` | `~/.config/opencode` | `skills/{qimen-bazi,bazi,qimen,paipan}` | ✗ | bun, or node ≥ 22.6 |
+| `--claude` | `~/.claude` | skills, commands, agent (no plugin) | ✓ | bun, or node ≥ 22.6 |
 
-`OPENCODE_CONFIG=/path bash install.sh …` targets a different config directory; `--help` prints
-usage. The flags are mutually exclusive.
+`OPENCODE_CONFIG=/path bash install.sh …` and `CLAUDE_CONFIG=/path bash install.sh --claude`
+target different config directories; `--help` prints usage. The flags are mutually exclusive.
 
 `install.sh` copies four things into `~/.config/opencode/` (override with `OPENCODE_CONFIG=/path`):
 
@@ -83,6 +86,33 @@ the plugin is not installed or fails to load. `install.sh` refreshes that copy f
 first — `plugin/` stays the single source of truth (`npm run check:skill` verifies it).
 
 Anything already there is moved to `~/.config/opencode/.backups/` first — nothing is silently overwritten, and no stray copy is left where OpenCode would load it.
+
+### Claude Code
+
+```bash
+bash install.sh --claude        # → ~/.claude/{skills,commands,agents}
+```
+
+The maths is portable; the packaging is not. What `--claude` does:
+
+| Piece | In Claude Code | Handled by `--claude` |
+|---|---|---|
+| `skill/qimen-bazi/` engine | runs unchanged (bash + bun/node) | copied to `~/.claude/skills/qimen-bazi/` |
+| Skill `name:` | must be `^[a-z0-9-]{1,64}$` | rewritten to `qimen-bazi` / `bazi` / `qimen` / `paipan` |
+| `SKILL_DIR` default | pointed at `~/.config/opencode` | rewritten to `~/.claude/skills/qimen-bazi` |
+| `commands/*.md` | `$ARGUMENTS` works as-is | copied to `~/.claude/commands/` |
+| `agent/qimen-master.md` | needs `name`; `mode`/`color` are OpenCode-only | regenerated with `name: qimen-master` |
+| `plugin/*.ts` | **not portable** (OpenCode `ctx.tool` API) | not installed — skills shell out to `scripts/qimen` |
+
+So in Claude there are **no `bazi_chart` / `qimen_chart` / `qimen_bazi_report` tools**: every
+workflow runs `~/.claude/skills/qimen-bazi/scripts/qimen`, which the commands and skills name as
+the fallback path. Two consequences worth knowing:
+
+- `metadata: opencode/autoinvoke: false` is ignored by Claude — skills are description-invocable.
+  The "don't cast on a bare date" rule survives only through the description wording.
+- `--open` still works on desktop; in a headless/cloud sandbox there is no browser to open.
+
+Restart the Claude Code session after installing — skills, commands and agents are read at startup.
 
 ### Skills-only (no plugin)
 
@@ -282,9 +312,10 @@ scripts/sync-skill.sh    regenerate the skill's engine copy from plugin/
 ```bash
 bash uninstall.sh                 # plugin + skills + agent + commands
 bash uninstall.sh --plugin-only   # just the tools; skills/commands keep working via scripts/qimen
+bash uninstall.sh --claude        # Claude Code: ~/.claude/{skills,commands,agents}
 ```
 
-Moves (does not delete) each installed piece into `~/.config/opencode/.backups/`. Undo by moving
+Moves (does not delete) each installed piece into `<config>/.backups/`. Undo by moving
 it back without the `.removed.<stamp>` suffix. A live session keeps the `bazi_chart` /
 `qimen_chart` / `qimen_bazi_report` tools until it restarts.
 

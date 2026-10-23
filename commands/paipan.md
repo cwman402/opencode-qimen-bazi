@@ -6,8 +6,9 @@ description: 八字＋奇門合參（先結構、後定位，並可用已發生�
 
 ## 流程
 
-1. **算盤**：呼叫 `qimen_bazi_report`，`export: false`。
-   出生地補 `tz`；要真太陽時加 `longitude` + `trueSolar: true`；性別必填。
+1. **算盤**：有 `qimen_bazi_report` 就用（`export: false`）；沒有（Claude Code 或
+   `--skill-only` 安裝）就用 `qimen-bazi` skill 的 CLI：`scripts/qimen …`（參數同名）。
+   出生地補 `tz`；真太陽時加 `longitude` + `trueSolar`（CLI：`--true-solar --longitude`）；性別必填。
 
 2. **時柱查驗（只在必要時）**：若時間落在 23:00–23:59，或在時辰交界 ±30 分鐘內，
    或被要求「更準」，就把兩個候選時辰各算一次（`ziShiRule` 或 `trueSolar` 的差異），
@@ -28,9 +29,10 @@ description: 八字＋奇門合參（先結構、後定位，並可用已發生�
 4. **應期寫法**：八字定「哪一年」，奇門定「哪個月／哪個方位／該做什麼動作」。
    例：「2029 己酉 沖卯（婚姻關口）；奇門 六合在離9，南方、夏月，宜在 2029 上半年把關係定下來。」
 
-5. **匯出**：再呼叫 `qimen_bazi_report`，同一組參數 + `notes`（第 3 步全文）+ `export: true`，
-   產出含批註的 HTML / PDF / PNG，並**用預設瀏覽器自動打開 PDF**（CLI: `--export --open`；
-   工具：`open: true`）。瀏覽器沒開起來就回報原因，不要假裝已開。
+5. **匯出**：同一組參數再算一次並匯出 —— 有工具時加 `notes`（第 3 步全文）+ `export: true`
+   + `open: true`；沒有時用 `scripts/qimen … --notes-file notes.md --export --open`。
+   產出含批註的 HTML / PDF / PNG，並**用預設瀏覽器自動打開 PDF**。
+   瀏覽器沒開起來就回報原因，不要假裝已開。
 
 6. **回覆**：一句話結論 + 合參表 + 3–6 個具體年份 + 圖檔路徑。
 
