@@ -20,12 +20,22 @@ pulls from npm at startup.
 |---|---|---|
 | Tool | `bazi_chart` | 四柱, 十神, 藏干, 納音, 十二長生, 空亡, 神煞, seasonally weighted 五行, 日主強弱 (得令/得地/得勢), 大運 + 流年 |
 | Tool | `qimen_chart` | hour chart: 局/元/節氣, 旬首, 值符/值使, 九星/八門/八神, 空亡, 馬星, 伏吟/反吟/五不遇時, 門宮生克, 取用錨點 |
-| Tool | `qimen_bazi_report` | both layers + A4 HTML/PDF/PNG; pass `notes` (markdown) to embed 師傅批註 |
+| Tool | `qimen_bazi_report` | both layers + A4 HTML/PDF/PNG; pass `notes` (markdown) to embed 師傅批註, `open: true` to show the PDF in your browser |
 | Command | `/paipan` | 八字＋奇門 合參, with a 議題 × 八字 × 奇門 × 判 table (recommended) |
 | Command | `/qimen` | one question, cast at a moment |
 | Command | `/bazi` | natal structure, 大運 / 流年 |
 | Agent | `qimen-master` | a session-long 術數 persona that always computes before it speaks |
 | Skill | `qimen-bazi` | the reading protocol **+ the whole engine**: `scripts/qimen` computes every board with no plugin loaded |
+| Skill | `bazi` | same workflow as `/bazi`; hidden from auto-selection — the command loads it by name |
+| Skill | `qimen` | same workflow as `/qimen`; hidden from auto-selection |
+| Skill | `paipan` | same workflow as `/paipan`; hidden from auto-selection |
+
+The three skills are thin entry points: they pull the parameters out of your message, run the
+engine, and load `qimen-bazi` for the reading protocol. All four carry
+`metadata: opencode/autoinvoke: false`, so **a bare date in chat does not start a reading** — only
+`/bazi`, `/qimen`, `/paipan` do, or an explicit 「用 bazi skill 排」. If someone pastes
+`2023-01-01 23:00 男` with no command, the right reply is to point at `/bazi`, not to cast the
+chart unasked.
 
 ---
 
@@ -45,14 +55,14 @@ Pick a subset if you don't want all four:
 
 ```bash
 bash install.sh --plugin-only   # only plugins/qimen-bazi — the three tools
-bash install.sh --skill-only    # only skills/qimen-bazi — protocol + engine, no plugin
+bash install.sh --skill-only    # only skills/ — protocol + engine + the three entry points, no plugin
 ```
 
 | Flag | Installs | Slash commands | Needs |
 |---|---|---|---|
-| (default) | plugin, skill, agent, commands | ✓ | — |
+| (default) | plugin, skills, agent, commands | ✓ | — |
 | `--plugin-only` | `plugins/qimen-bazi` | ✗ | — |
-| `--skill-only` | `skills/qimen-bazi` | ✗ | bun, or node ≥ 22.6 |
+| `--skill-only` | `skills/{qimen-bazi,bazi,qimen,paipan}` | ✗ | bun, or node ≥ 22.6 |
 
 `OPENCODE_CONFIG=/path bash install.sh …` targets a different config directory; `--help` prints
 usage. The flags are mutually exclusive.
@@ -62,6 +72,8 @@ usage. The flags are mutually exclusive.
 ```
 plugins/qimen-bazi/       the plugin (auto-loaded, optional)
 skills/qimen-bazi/        the reading protocol + self-contained engine
+skills/{bazi,qimen,paipan}/
+                          entry-point skills (load qimen-bazi for the protocol)
 agents/qimen-master.md    the master persona
 commands/{paipan,qimen,bazi}.md
 ```
@@ -83,7 +95,7 @@ bash install.sh --skill-only
 or copy the folder yourself:
 
 ```bash
-cp -R skill/qimen-bazi ~/.config/opencode/skills/
+cp -R skill/qimen-bazi skill/bazi skill/qimen skill/paipan ~/.config/opencode/skills/
 ```
 
 or point a config at the checkout and let OpenCode discover it:
@@ -150,17 +162,23 @@ bun test/crossvalidate.ts   # → checked 400, mismatched 0
 
 ## Use it
 
-Talk to it normally — the skill loads itself:
+Everything starts from a slash command — the skills are hidden from auto-selection:
 
 ```
 /paipan 1992-11-08 16:45 香港 男 2019轉職 2021搬遷
 ```
 ```
-幫我排個盤：1995-08-08 21:40，香港，男
+/bazi 1995-08-08 21:40 香港 男
 ```
 ```
-幫我起個局：這筆錢會不會回來？
+/qimen 這筆錢會不會回來？
 ```
+```
+用 bazi skill 排 1995-08-08 21:40 香港 女
+```
+
+Plain chat does **not** cast a chart. `2023-01-01 23:00 男` on its own is data, not a request —
+the agent answers with the command to run (`/bazi 2023-01-01 23:00 男`) instead of reading it.
 
 **Birth data it can use:** `datetime` (`YYYY-MM-DD HH:mm`, local wall clock), `tz` (IANA),
 `longitude` + `trueSolar` for 真太陽時, `gender` (needed for 大運 direction), and `ziShiRule`
@@ -171,6 +189,12 @@ for the 23:00–23:59 子時 convention.
 1. `qimen_bazi_report(..., export: false)` → read the chart
 2. write the reading as markdown
 3. `qimen_bazi_report(..., notes: "<that markdown>", export: true)` → final document
+
+Step 3 can also pass `--open` to launch the finished PDF in your default browser
+(`QIMEN_BROWSER=/path/to/browser` overrides the desktop's default web browser). Snap-packaged
+browsers get a private `/tmp`, so an export written there is copied to `~/opencode-qimen/`
+(`~/Documents/opencode-qimen/` if `Documents` exists) and the `OPEN …` line prints the path that
+actually opened.
 
 The document then contains:
 
@@ -188,11 +212,11 @@ Two entry points, one engine:
 ```bash
 # from the skill (works on its own, no plugin)
 ./skill/qimen-bazi/scripts/qimen --name example --date "1992-11-08 16:45" --tz Asia/Hong_Kong \
-                                 --gender male --notes-file reading.md --export
+                                 --gender male --notes-file reading.md --export --open
 
 # from the plugin checkout
 bun plugin/cli.ts --name example --date "1992-11-08 16:45" --tz Asia/Hong_Kong \
-                  --gender male --notes-file reading.md --export
+                  --gender male --notes-file reading.md --export --open
 ```
 
 ---
@@ -242,11 +266,12 @@ plugin/lib/text.ts       CJK-width-aware terminal tables
 plugin/lib/html.ts       print-ready A4 sheet
 plugin/lib/md.ts         minimal markdown → HTML (for the reading)
 plugin/lib/narrative.ts  deterministic structural commentary
-plugin/lib/export.ts     HTML → PDF (WeasyPrint) → PNG (PyMuPDF)
+plugin/lib/export.ts     HTML → PDF (WeasyPrint) → PNG (PyMuPDF) → open in browser
 plugin/lib/chart.ts      builds both layers from one moment
 plugin/lib/report.ts     markdown assembly
 plugin/vendor/lunar.cjs  lunar-javascript 1.7.7 (MIT)
 skill/qimen-bazi/        SKILL.md + bundled engine (generated, see scripts/sync-skill.sh)
+skill/{bazi,qimen,paipan}/  entry-point skills (thin wrappers over the same workflow)
 agent/ commands/         OpenCode persona + slash commands
 test/                    regression + cross-validation
 scripts/sync-skill.sh    regenerate the skill's engine copy from plugin/
@@ -255,10 +280,13 @@ scripts/sync-skill.sh    regenerate the skill's engine copy from plugin/
 ## Uninstall
 
 ```bash
-bash uninstall.sh
+bash uninstall.sh                 # plugin + skills + agent + commands
+bash uninstall.sh --plugin-only   # just the tools; skills/commands keep working via scripts/qimen
 ```
 
-Moves (does not delete) each installed piece into `~/.config/opencode/.backups/`.
+Moves (does not delete) each installed piece into `~/.config/opencode/.backups/`. Undo by moving
+it back without the `.removed.<stamp>` suffix. A live session keeps the `bazi_chart` /
+`qimen_chart` / `qimen_bazi_report` tools until it restarts.
 
 ## License
 

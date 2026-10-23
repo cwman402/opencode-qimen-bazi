@@ -10,7 +10,7 @@
 
 import { buildChart } from "./lib/chart.ts";
 import { baziOnly, qimenOnly, fullReport, renderHtmlDoc } from "./lib/report.ts";
-import { exportDocument, slugify } from "./lib/export.ts";
+import { exportDocument, openInBrowser, slugify } from "./lib/export.ts";
 
 const DATE_DESC =
   "Local wall-clock moment, 'YYYY-MM-DD HH:mm' (e.g. '1992-11-08 16:45'). Omit for now.";
@@ -165,6 +165,12 @@ export default {
             type: "boolean",
             description: "Write HTML/PDF/PNG files. Default true.",
           },
+          open: {
+            type: "boolean",
+            description:
+              "After exporting, open the PDF in the user's default browser (falls back to the HTML " +
+              "if no PDF renderer ran). Default false.",
+          },
           outDir: {
             type: "string",
             description: "Directory for the exported files. Default ~/.local/share/opencode/qimen.",
@@ -191,10 +197,12 @@ export default {
             if (input.export !== false) {
               const base = `${slugify(input.name || "chart")}-${c.meta.stamp}`;
               const res = exportDocument(renderHtmlDoc(c, input.notes), input.outDir || "", base);
+              const opened = input.open ? openInBrowser(res.pdf || res.html || "") : null;
               files = {
                 html: res.html, pdf: res.pdf, png: res.png, warnings: res.warnings,
                 hasNotes: !!(input.notes && input.notes.trim()),
-              };
+                ...(input.open ? { opened: opened ?? "failed" } : {}),
+              } as any;
             }
 
             return {

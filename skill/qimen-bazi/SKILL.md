@@ -1,8 +1,9 @@
 ---
 name: 奇門遁甲 · 八字
-description: Read 奇門遁甲 (Qimen Dunjia) and 八字 (BaZi / Four Pillars) charts as a practising master, using the bundled chart engine (scripts/qimen). Use whenever the user gives a birth date/time, asks for a 命盤/卦/占卜/合婚/流年 reading, asks what a 奇門 board means, or asks about 大運, 十神, 用神, 財運, 婚期, 事業 timing.
+description: Reading protocol for 奇門遁甲 (Qimen Dunjia) and 八字 (BaZi / Four Pillars), using the bundled chart engine (scripts/qimen). Hidden from auto-selection; loaded by the /bazi, /qimen and /paipan commands, or when the user explicitly names this skill, never on a bare birth date or a passing mention of 命盤/卦/流年.
 metadata:
-  opencode/autoinvoke: true
+  # Hidden from the model's auto-invoke list: the slash commands load it by name.
+  opencode/autoinvoke: false
 ---
 
 # 奇門遁甲 · 八字 — reading protocol
@@ -55,6 +56,7 @@ QIMEN="$SKILL_DIR/scripts/qimen"
 --notes-file file.md        師傅批註 markdown to embed in the export
 --notes "text"              same, inline (prefer --notes-file for anything multiline)
 --export                    write HTML (always) + PDF/PNG when WeasyPrint/PyMuPDF exist
+--open                      after exporting, open the PDF in the default browser
 --out DIR                   export directory (default ~/.local/share/opencode/qimen)
 ```
 
@@ -76,8 +78,12 @@ The exported sheet must carry the prose, not just the boards:
 1. Run with **no** `--export` → read the chart.
 2. Write the reading as markdown to a scratch file
    (e.g. `/tmp/opencode/qimen-notes.md`; headings, tables, bullets, quotes all render).
-3. Run again with the **same** arguments plus `--notes-file <that file> --export`.
-   The CLI prints `HTML / PDF / PNG` paths — quote them back to the user.
+3. Run again with the **same** arguments plus `--notes-file <that file> --export --open`.
+   The CLI prints `HTML / PDF / PNG` paths and `OPEN <browser> → <pdf>`; quote them back to the user.
+   `--open` launches the PDF in the default browser (`$QIMEN_BROWSER` overrides). If no browser
+   starts, say so — don't claim the document was shown. Snap browsers cannot see `/tmp`, so when
+   the export lives there the PDF is copied under `~/opencode-qimen/` and *that* path is printed —
+   quote the `OPEN …` line, not the `PDF …` line.
 
 `notes` is rendered as **師傅批註** right after the auto-generated **盤面解讀**, so HTML/PDF/PNG
 hold board + wording together. Skipping step 3 leaves a chart-only PDF.

@@ -20,8 +20,10 @@ description: 起奇門遁甲時盤（問事、當下局），出含批註的 PDF
 3. 再呼叫 `qimen_bazi_report`，同一組參數，加上：
    - `notes`: 上一步的完整 markdown
    - `export: true`
+   - `open: true`（完成後用預設瀏覽器打開 PDF）
    這一步產出**含批註**的 HTML / PDF / PNG。
-   沒有 plugin 時對應 CLI：`scripts/qimen … --notes-file notes.md --export`。
+   沒有 plugin 時對應 CLI：`scripts/qimen … --notes-file notes.md --export --open`；
+   回報時引用 `OPEN …` 印出的實際路徑。
 4. 回覆：結論 + 關鍵宮位表 + 圖檔路徑。
 
 只想知道卦、不要文件時，可直接用 `qimen_chart`（可帶 `question`）。

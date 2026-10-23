@@ -23,8 +23,8 @@ usage() {
   (no flag)       plugin + skill + agent + commands   ← default
   --plugin-only   only plugins/qimen-bazi (the bazi_chart / qimen_chart /
                   qimen_bazi_report tools)
-  --skill-only    only skills/qimen-bazi (reading protocol + self-contained
-                  engine; runs scripts/qimen through the shell)
+  --skill-only    only skills/ (reading protocol + self-contained engine;
+                  runs scripts/qimen through the shell)
 
   OPENCODE_CONFIG=/path   install into a different config directory
 EOF
@@ -88,6 +88,15 @@ if [ "$NEED_SKILL" = 1 ]; then
   fi
   put "$SRC/skill/qimen-bazi"     "$DEST/skills/qimen-bazi"
   ok "skill     $DEST/skills/qimen-bazi/  (SKILL.md + scripts/qimen + engine)"
+
+  # Entry-point skills: bazi / qimen / paipan. They are thin wrappers that load
+  # qimen-bazi for the reading protocol, so they ship alongside it.
+  for d in "$SRC"/skill/*/; do
+    name="$(basename "$d")"
+    [ "$name" = "qimen-bazi" ] && continue
+    put "$d" "$DEST/skills/$name"
+    ok "skill     $DEST/skills/$name/"
+  done
 fi
 
 if [ "$NEED_EXTRAS" = 1 ]; then
@@ -142,19 +151,21 @@ case "$MODE" in
   all)
     say "  1. restart the OpenCode service   →  opencode service restart"
     say "  2. in the TUI try                →  /paipan 1992-11-08 16:45 香港 男"
-    say "     or just ask: 「幫我排個八字，1995-08-08 21:40 香港，女」"
+    say "     also:  /bazi 1995-08-08 21:40 香港 女   ·   /qimen 這筆錢會不會回來？"
+    say "     (the skills are hidden from auto-selection — only these commands start a reading)"
     ;;
   plugin)
     say "  1. restart the OpenCode service   →  opencode service restart"
-    say "  2. ask in a new session: 「幫我排個八字，1995-08-08 21:40 香港，女」"
+    say "  2. the tools are callable in a new session: bazi_chart / qimen_chart / qimen_bazi_report"
     say "     (tools only — no reading protocol, no slash commands)"
-    say "     add those with:  bash $SRC/install.sh   or   --skill-only"
+    say "     add those with:  bash $SRC/install.sh"
     ;;
   skill)
     say "  skills hot-reload — no restart usually needed"
-    say "  try asking: 「幫我排個八字，1995-08-08 21:40 香港，女」"
+    say "  the skills are hidden from auto-selection, so name one explicitly:"
+    say "     「用 bazi skill 排 1995-08-08 21:40 香港 女」"
     say "  or run it yourself:  $DEST/skills/qimen-bazi/scripts/qimen --help"
-    say "  (skill only — no tools, no slash commands)"
+    say "  (skill only — no tools, no slash commands; run install.sh without a flag for /bazi)"
     ;;
 esac
 say ""

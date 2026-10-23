@@ -1,13 +1,28 @@
 #!/usr/bin/env bash
-# Remove the 奇門遁甲 · 八字 plugin, skill, agent and commands from OpenCode.
-# Usage: bash uninstall.sh [--yes]
+# Remove the 奇門遁甲 · 八字 plugin, skills, agent and commands from OpenCode.
+# Usage: bash uninstall.sh [--plugin-only] [--yes]
 set -euo pipefail
 
 DEST="${OPENCODE_CONFIG:-$HOME/.config/opencode}"
 STAMP="$(date +%Y%m%d%H%M%S)"
 
-if [ "${1:-}" != "--yes" ]; then
-  printf 'Remove qimen-bazi from %s ? [y/N] ' "$DEST"
+MODE=all
+for arg in "$@"; do
+  case "$arg" in
+    --plugin-only) MODE=plugin ;;
+    --yes|-y)      YES=1 ;;
+    -h|--help)     echo "usage: bash uninstall.sh [--plugin-only] [--yes]"; exit 0 ;;
+    *) echo "uninstall.sh: unknown option: $arg" >&2; exit 2 ;;
+  esac
+done
+
+case "$MODE" in
+  plugin) WHAT="the qimen-bazi plugin (tools only — skills and commands stay)" ;;
+  *)      WHAT="qimen-bazi (plugin + skills + agent + commands)" ;;
+esac
+
+if [ "${YES:-0}" != 1 ]; then
+  printf 'Remove %s from %s ? [y/N] ' "$WHAT" "$DEST"
   read -r ans
   [ "$ans" = "y" ] || [ "$ans" = "Y" ] || { echo "cancelled"; exit 0; }
 fi
@@ -16,16 +31,31 @@ BACKUP="$DEST/.backups"
 mkdir -p "$BACKUP"
 mv_if() {
   if [ -e "$1" ]; then
-    mv "$1" "$BACKUP/$(basename "$1").removed.$STAMP"
-    echo "  moved $(basename "$1") → .backups/$(basename "$1").removed.$STAMP"
+    # Prefix with the parent dir: plugins/qimen-bazi and skills/qimen-bazi share a
+    # basename, and a plain basename backup would silently overwrite the first one.
+    local name
+    name="$(basename "$(dirname "$1")")-$(basename "$1")"
+    mv "$1" "$BACKUP/$name.removed.$STAMP"
+    echo "  moved $name → .backups/$name.removed.$STAMP"
   fi
 }
 
 mv_if "$DEST/plugins/qimen-bazi"
-mv_if "$DEST/skills/qimen-bazi"
-mv_if "$DEST/agents/qimen-master.md"
-for c in paipan qimen bazi; do mv_if "$DEST/commands/$c.md"; done
+
+if [ "$MODE" = all ]; then
+  mv_if "$DEST/skills/qimen-bazi"
+  mv_if "$DEST/skills/bazi"
+  mv_if "$DEST/skills/qimen"
+  mv_if "$DEST/skills/paipan"
+  mv_if "$DEST/agents/qimen-master.md"
+  for c in paipan qimen bazi; do mv_if "$DEST/commands/$c.md"; done
+fi
 
 echo ""
-echo "Done. Restart OpenCode:  opencode service restart"
+if [ "$MODE" = plugin ]; then
+  echo "Done — plugin removed. The skills still work on their own (scripts/qimen), no restart needed."
+  echo "Note: a running session keeps the tools until it is restarted."
+else
+  echo "Done. Restart OpenCode:  opencode service restart"
+fi
 echo "Moved (not deleted) to $BACKUP — restore by copying back without the .removed suffix."

@@ -17,9 +17,11 @@ description: 排八字四柱、大運流年，出含批註的 PDF
    - 流年應期：3–6 個具體年份，每個寫出機制
    - 風險與建議
    - 收尾免責聲明
-3. 再呼叫 `qimen_bazi_report`，同一組參數，加上 `notes`（上一步的 markdown）與 `export: true`，
-   產出**含批註**的 HTML / PDF / PNG（文件同時附奇門盤，方便對照）。
-   沒有 plugin 時：`scripts/qimen … --notes-file notes.md --export`。
+3. 再呼叫 `qimen_bazi_report`，同一組參數，加上 `notes`（上一步的 markdown）、`export: true`
+   與 `open: true`，產出**含批註**的 HTML / PDF / PNG（文件同時附奇門盤，方便對照），
+   並用預設瀏覽器打開 PDF。
+   沒有 plugin 時：`scripts/qimen … --notes-file notes.md --export --open`；
+   回報時引用 `OPEN …` 那行印出的實際路徑，不是 `PDF …` 那行。
 4. 回覆：結論 + 流年表 + 圖檔路徑。
 
 合婚（兩張盤）時：兩張各自 `bazi_chart`，逐項比對 日支 → 日主生剋 → 配偶星 → 大運共時，

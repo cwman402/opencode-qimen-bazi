@@ -9,7 +9,7 @@
 import { readFileSync } from "node:fs";
 import { buildChart } from "./lib/chart.ts";
 import { baziOnly, qimenOnly, fullReport, renderHtmlDoc } from "./lib/report.ts";
-import { exportDocument, slugify } from "./lib/export.ts";
+import { exportDocument, openInBrowser, slugify } from "./lib/export.ts";
 
 const args = process.argv.slice(2);
 const get = (name: string, fallback?: string) => {
@@ -36,6 +36,7 @@ if (has("help") || has("h")) {
   --notes "文字" | --notes-file x.md
                               批註 markdown，會併入 PDF/HTML
   --export                    輸出 HTML/PDF/PNG
+  --open                      完成後用預設瀏覽器打開 PDF（需 --export）
   --out DIR                   輸出目錄（預設 ~/.local/share/opencode/qimen）
 `);
   process.exit(0);
@@ -72,5 +73,12 @@ if (has("export") || has("qimen") || has("bazi")) {
     if (res.pdf) console.log(`PDF  ${res.pdf}`);
     for (const p of res.png) console.log(`PNG  ${p}`);
     if (res.warnings.length) console.log(`note ${res.warnings.join("; ")}`);
+
+    if (has("open")) {
+      // Prefer the PDF (finished sheet); fall back to the HTML if no renderer ran.
+      const target = res.pdf || res.html;
+      const used = target ? openInBrowser(target) : null;
+      console.log(used ? `OPEN ${used}` : "note could not open a browser (set QIMEN_BROWSER)");
+    }
   }
 }

@@ -1,8 +1,8 @@
 // HTML → PDF (WeasyPrint) → PNG (PyMuPDF). All optional: if a renderer is
 // missing the HTML is still written and the tool reports what was skipped.
 
-import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { spawn, spawnSync } from "node:child_process";
+import { copyFileSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
 
@@ -31,6 +31,93 @@ function has(cmd: string): boolean {
 
 function first(cands: string[]): string | null {
   for (const c of cands) if (has(c)) return c;
+  return null;
+}
+
+/** Detached so a browser window never keeps the CLI process alive. */
+function spawnDetached(cmd: string, argv: string[]): boolean {
+  try {
+    const child = spawn(cmd, argv, { detached: true, stdio: "ignore" });
+    child.unref();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Resolve the desktop's default web browser to an executable name, if we can. */
+function defaultWebBrowser(): string | null {
+  const r = spawnSync("xdg-settings", ["get", "default-web-browser"], { encoding: "utf8" });
+  const id = (r.stdout || "").trim();
+  if (r.status !== 0 || !id) return null;
+  // firefox_firefox.desktop / firefox.desktop / google-chrome.desktop
+  const base = id.replace(/\.desktop$/, "").split("_")[0].replace(/-stable$/, "");
+  return has(base) ? base : null;
+}
+
+/** Resolve a bare command name to the file that will actually run. */
+function resolveCmd(cmd: string): string | null {
+  const r = spawnSync("bash", ["-lc", `command -v ${cmd}`], { encoding: "utf8" });
+  const p = (r.stdout || "").trim();
+  return r.status === 0 && p ? p : cmd.includes("/") ? cmd : null;
+}
+
+/**
+ * Snap-confined apps cannot see /tmp or any dot-directory under $HOME.
+ * Ubuntu's /usr/bin/firefox is a shim around the snap, so check the target too.
+ */
+function isSnapApp(cmd: string): boolean {
+  const resolved = resolveCmd(cmd);
+  if (!resolved) return false;
+  const real = spawnSync("readlink", ["-f", resolved], { encoding: "utf8" }).stdout?.trim() || "";
+  if (resolved.includes("/snap/") || real.includes("/snap/")) return true;
+  try {
+    const head = readFileSync(resolved, "utf8").slice(0, 400);
+    return /\/snap\/bin\//.test(head) || /SNAP=/i.test(head);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Snap-confined browsers cannot see /tmp (private tmpfs), so a file written there is
+ * invisible to them even though it exists on disk. Stage a copy under $HOME, which the
+ * home interface does expose. Paths already under $HOME are used as-is.
+ */
+function stageForBrowser(path: string): string {
+  if (path.startsWith(homedir() + "/")) return path;
+  const docs = join(homedir(), "Documents");
+  const dir = existsSync(docs) ? join(docs, "opencode-qimen") : join(homedir(), "opencode-qimen");
+  try {
+    mkdirSync(dir, { recursive: true });
+    const staged = join(dir, path.split("/").pop() || "chart.pdf");
+    copyFileSync(path, staged);
+    return staged;
+  } catch {
+    return path;
+  }
+}
+
+/**
+ * Open a rendered document in the user's default browser.
+ * Order: $QIMEN_BROWSER → default web browser → xdg-open / open / start.
+ * Returns `"<browser> → <file actually opened>"`, or null if none worked.
+ */
+export function openInBrowser(path: string): string | null {
+  if (process.platform === "darwin") return spawnDetached("open", [path]) ? `open → ${path}` : null;
+  if (process.platform === "win32") return spawnDetached("cmd", ["/c", "start", "", path]) ? `start → ${path}` : null;
+
+  const env = (process.env.QIMEN_BROWSER || "").trim();
+  const browser = (env && has(env) ? env : defaultWebBrowser()) || first(["firefox", "google-chrome", "chromium", "brave-browser", "microsoft-edge"]);
+  if (browser) {
+    // Snap browsers need a copy outside dot-dirs; a normal browser takes the path as-is.
+    const target = isSnapApp(browser) ? stageForBrowser(path) : path;
+    if (spawnDetached(browser, [target])) return `${browser} → ${target}`;
+  }
+
+  // Last resort: the desktop's own handler for the file type.
+  const staged = stageForBrowser(path);
+  if (has("xdg-open") && spawnDetached("xdg-open", [staged])) return `xdg-open → ${staged}`;
   return null;
 }
 
