@@ -1,8 +1,8 @@
 ---
 name: 八字奇門合參
-description: Combined 八字＋奇門 report behind the /paipan command — natal structure first, then the 奇門 layer, with a 議題 × 八字 × 奇門 × 判 table, 應期 by year and month, and a 含批註 PDF. Hidden from auto-selection; load it only when the /paipan command runs or the user explicitly names the paipan skill, never on a bare 命盤 request.
+description: Combined 八字＋奇門 report behind the /paipan command — natal structure first, then the 奇門 layer, with a 議題 × 八字 × 奇門 × 判 table, 應期 by year and month, and a 含批註 PDF. Hidden from auto-selection in OpenCode; load it only when the /paipan command runs or the user explicitly names the paipan skill, never on a bare 命盤 request.
 metadata:
-  # Hidden from the model's auto-invoke list: /paipan loads it by name.
+  # OpenCode-only flag: keeps it out of the model's auto-invoke list. /paipan loads it by name.
   # Plain chat must NOT trigger it.
   opencode/autoinvoke: false
 ---

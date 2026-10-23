@@ -1,8 +1,8 @@
 ---
 name: 奇門起局
-description: 奇門遁甲 entry point behind the /qimen command — cast a 時家奇門 時盤 for a moment or a question, give the 用神 reading and 應期, export a 含批註 PDF. Hidden from auto-selection; load it only when the /qimen command runs or the user explicitly names the qimen skill, never on a passing mention of 起局/卜卦/看盤.
+description: 奇門遁甲 entry point behind the /qimen command — cast a 時家奇門 時盤 for a moment or a question, give the 用神 reading and 應期, export a 含批註 PDF. Hidden from auto-selection in OpenCode; load it only when the /qimen command runs or the user explicitly names the qimen skill, never on a passing mention of 起局/卜卦/看盤.
 metadata:
-  # Hidden from the model's auto-invoke list: /qimen loads it by name.
+  # OpenCode-only flag: keeps it out of the model's auto-invoke list. /qimen loads it by name.
   # Plain chat must NOT trigger it.
   opencode/autoinvoke: false
 ---

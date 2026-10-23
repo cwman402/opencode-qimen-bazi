@@ -1,8 +1,8 @@
 ---
 name: 八字排盤
-description: 子平八字 entry point behind the /bazi command — 四柱, 十神, 五行, 大運, 流年, 應期, and a 含批註 PDF. Hidden from auto-selection; load it only when the /bazi command runs or the user explicitly names the bazi skill, never on a bare birth date or a passing mention of 命盤/流年.
+description: 子平八字 entry point behind the /bazi command — 四柱, 十神, 五行, 大運, 流年, 應期, and a 含批註 PDF. Hidden from auto-selection in OpenCode; load it only when the /bazi command runs or the user explicitly names the bazi skill, never on a bare birth date or a passing mention of 命盤/流年.
 metadata:
-  # Hidden from the model's auto-invoke list: /bazi loads it by name.
+  # OpenCode-only flag: keeps it out of the model's auto-invoke list. /bazi loads it by name.
   # Plain chat (a bare date, "排個盤") must NOT trigger it.
   opencode/autoinvoke: false
 ---

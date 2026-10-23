@@ -32,10 +32,11 @@ pulls from npm at startup.
 
 The three skills are thin entry points: they pull the parameters out of your message, run the
 engine, and load `qimen-bazi` for the reading protocol. All four carry
-`metadata: opencode/autoinvoke: false`, so **a bare date in chat does not start a reading** — only
-`/bazi`, `/qimen`, `/paipan` do, or an explicit 「用 bazi skill 排」. If someone pastes
-`2023-01-01 23:00 男` with no command, the right reply is to point at `/bazi`, not to cast the
-chart unasked.
+`metadata: opencode/autoinvoke: false`, so **in OpenCode a bare date in chat does not start a
+reading** — only `/bazi`, `/qimen`, `/paipan` do, or an explicit 「用 bazi skill 排」. If someone
+pastes `2023-01-01 23:00 男` with no command, the right reply is to point at `/bazi`, not to cast
+the chart unasked. (Claude Code has no such flag: there the same rule rests on the descriptions
+saying "never on a bare birth date" — see [Claude Code](#claude-code).)
 
 ---
 

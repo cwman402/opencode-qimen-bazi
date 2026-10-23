@@ -1,8 +1,8 @@
 ---
 name: 奇門遁甲 · 八字
-description: Reading protocol for 奇門遁甲 (Qimen Dunjia) and 八字 (BaZi / Four Pillars), using the bundled chart engine (scripts/qimen). Hidden from auto-selection; loaded by the /bazi, /qimen and /paipan commands, or when the user explicitly names this skill, never on a bare birth date or a passing mention of 命盤/卦/流年.
+description: Reading protocol for 奇門遁甲 (Qimen Dunjia) and 八字 (BaZi / Four Pillars), using the bundled chart engine (scripts/qimen). Hidden from auto-selection in OpenCode; loaded by the /bazi, /qimen and /paipan commands, or when the user explicitly names this skill, never on a bare birth date or a passing mention of 命盤/卦/流年.
 metadata:
-  # Hidden from the model's auto-invoke list: the slash commands load it by name.
+  # OpenCode-only flag: keeps it out of the model's auto-invoke list. the slash commands load it by name.
   opencode/autoinvoke: false
 ---
 
@@ -29,16 +29,29 @@ CLI is the dependency-free path and prints the identical boards.
 
 ### Running it
 
-The `skill` tool reports this skill's **base directory**. Define it once per session, then reuse:
+The `skill` tool reports this skill's **base directory**. Define it once per session, then reuse
+(the second line covers a Claude Code install, which has no `~/.config/opencode`):
 
 ```bash
 SKILL_DIR="${SKILL_DIR:-$HOME/.config/opencode/skills/qimen-bazi}"
+[ -d "$SKILL_DIR" ] || SKILL_DIR="$HOME/.claude/skills/qimen-bazi"
 QIMEN="$SKILL_DIR/scripts/qimen"
 "$QIMEN" --help
 ```
 
 `scripts/qimen` picks `bun` when present, otherwise `node --experimental-strip-types`
 (node ≥ 22.6). Nothing else is required for terminal charts.
+
+### Hosts
+
+| Host | Tools available | How a chart is computed |
+|---|---|---|
+| OpenCode, default install | `bazi_chart`, `qimen_chart`, `qimen_bazi_report` | prefer the tools |
+| OpenCode, `--skill-only` | none | `"$QIMEN" …` in the shell |
+| Claude Code, `--claude` | none — its plugin API is different | `"$QIMEN" …` in the shell |
+
+Same engine, same boards. Only the first row has `notes` / `export` / `open` as **tool
+parameters**; on the CLI they are `--notes-file`, `--export`, `--open`.
 
 ### Flags
 
